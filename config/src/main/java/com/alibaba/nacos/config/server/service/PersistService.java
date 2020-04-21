@@ -759,14 +759,14 @@ public class PersistService {
     }
 
     /**
+     * @return List<ConfigInfo> deleted configInfos
      * @author klw
      * @Description: delete config info by ids
      * @Date 2019/7/5 16:45
      * @Param [ids, srcIp, srcUser]
-     * @return List<ConfigInfo> deleted configInfos
      */
     public List<ConfigInfo> removeConfigInfoByIds(final List<Long> ids, final String srcIp, final String srcUser) {
-        if(CollectionUtils.isEmpty(ids)){
+        if (CollectionUtils.isEmpty(ids)) {
             return null;
         }
         ids.removeAll(Collections.singleton(null));
@@ -780,7 +780,7 @@ public class PersistService {
                     List<ConfigInfo> configInfoList = findConfigInfosByIds(idsStr);
                     if (!CollectionUtils.isEmpty(configInfoList)) {
                         removeConfigInfoByIdsAtomic(idsStr);
-                        for(ConfigInfo configInfo : configInfoList){
+                        for (ConfigInfo configInfo : configInfoList) {
                             removeTagByIdAtomic(configInfo.getId());
                             insertConfigHistoryAtomic(configInfo.getId(), configInfo, srcIp, srcUser, time, "D");
                         }
@@ -1345,16 +1345,16 @@ public class PersistService {
             where.append(" a.tenant_id=? ");
 
             if (StringUtils.isNotBlank(dataId)) {
-                where.append(" and a.data_id=? ");
-                paramList.add(dataId);
+                where.append(" and a.data_id like ? ");
+                paramList.add("%" + dataId + "%");
             }
             if (StringUtils.isNotBlank(group)) {
-                where.append(" and a.group_id=? ");
-                paramList.add(group);
+                where.append(" and a.group_id like ? ");
+                paramList.add("%" + group + "%");
             }
             if (StringUtils.isNotBlank(appName)) {
-                where.append(" and a.app_name=? ");
-                paramList.add(appName);
+                where.append(" and a.app_name like ? ");
+                paramList.add("%" + appName + "%");
             }
 
             where.append(" and b.tag_name in (");
@@ -1370,16 +1370,16 @@ public class PersistService {
         } else {
             where.append(" tenant_id=? ");
             if (StringUtils.isNotBlank(dataId)) {
-                where.append(" and data_id=? ");
-                paramList.add(dataId);
+                where.append(" and data_id like ? ");
+                paramList.add("%" + dataId + "%");
             }
             if (StringUtils.isNotBlank(group)) {
-                where.append(" and group_id=? ");
-                paramList.add(group);
+                where.append(" and group_id like ? ");
+                paramList.add("%" + group + "%");
             }
             if (StringUtils.isNotBlank(appName)) {
-                where.append(" and app_name=? ");
-                paramList.add(appName);
+                where.append(" and app_name like ? ");
+                paramList.add("%" + appName + "%");
             }
         }
         try {
@@ -1688,6 +1688,28 @@ public class PersistService {
         String sql = "SELECT group_id FROM config_info WHERE tenant_id ='' GROUP BY group_id LIMIT ?, ?";
         int from = (page - 1) * pageSize;
         return jt.queryForList(sql, String.class, from, pageSize);
+    }
+
+    public List<String> getDistinctGroupNameList(String tenant) {
+        String sql = "select distinct(group_id) from config_info ";
+        if (StringUtils.isNotBlank(tenant)) {
+            sql = sql + " where tenant_id=?";
+            return jt.queryForList(sql, String.class, new Object[]{tenant});
+        } else {
+            return jt.queryForList(sql, String.class);
+        }
+    }
+
+    public List<String> getDataIdNameList(String tenant, String group) {
+
+        String sql = "select distinct(data_id) from config_info where tenant_id=?";
+        List<Object> params = new ArrayList();
+        params.add(tenant);
+        if (StringUtils.isNotBlank(group)) {
+            sql = sql + " and group_id=?";
+            params.add(group);
+        }
+        return jt.queryForList(sql, String.class, params.toArray());
     }
 
     public int aggrConfigInfoCount(String dataId, String group, String tenant) {
@@ -2836,14 +2858,14 @@ public class PersistService {
     }
 
     /**
+     * @return void
      * @author klw
      * @Description: Delete configuration; database atomic operation, minimum SQL action, no business encapsulation
      * @Date 2019/7/5 16:39
      * @Param [id]
-     * @return void
      */
     private void removeConfigInfoByIdsAtomic(final String ids) {
-        if(StringUtils.isBlank(ids)){
+        if (StringUtils.isBlank(ids)) {
             return;
         }
         StringBuilder sql = new StringBuilder(SQL_DELETE_CONFIG_INFO_BY_IDS);
@@ -2935,7 +2957,7 @@ public class PersistService {
         try {
             return this.jt.queryForObject(
                 "SELECT ID,data_id,group_id,tenant_id,app_name,content,md5,type FROM config_info WHERE data_id=? AND group_id=? AND tenant_id=?",
-                new Object[] {dataId, group, tenantTmp}, CONFIG_INFO_ROW_MAPPER);
+                new Object[]{dataId, group, tenantTmp}, CONFIG_INFO_ROW_MAPPER);
         } catch (EmptyResultDataAccessException e) { // 表明数据不存在, 返回null
             return null;
         } catch (CannotGetJdbcConnectionException e) {
@@ -2945,14 +2967,14 @@ public class PersistService {
     }
 
     /**
+     * @return java.util.List<com.alibaba.nacos.config.server.model.ConfigInfo>
      * @author klw
      * @Description: find ConfigInfo by ids
      * @Date 2019/7/5 16:37
      * @Param [ids]
-     * @return java.util.List<com.alibaba.nacos.config.server.model.ConfigInfo>
      */
     public List<ConfigInfo> findConfigInfosByIds(final String ids) {
-        if(StringUtils.isBlank(ids)){
+        if (StringUtils.isBlank(ids)) {
             return null;
         }
         StringBuilder sql = new StringBuilder(SQL_FIND_CONFIG_INFO_BY_IDS);
@@ -3396,7 +3418,7 @@ public class PersistService {
      * @return Collection of ConfigInfo objects
      */
     public List<ConfigAllInfo> findAllConfigInfo4Export(final String dataId, final String group, final String tenant,
-                                                     final String appName, final List<Long> ids) {
+                                                        final String appName, final List<Long> ids) {
         String tenantTmp = StringUtils.isBlank(tenant) ? StringUtils.EMPTY : tenant;
         StringBuilder where = new StringBuilder(" where ");
         List<Object> paramList = new ArrayList<>();

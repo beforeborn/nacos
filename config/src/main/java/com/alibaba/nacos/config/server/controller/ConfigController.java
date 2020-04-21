@@ -87,6 +87,37 @@ public class ConfigController {
         this.configSubService = configSubService;
     }
 
+    @GetMapping(params = "search=group")
+    @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
+    public List<String> searchGroup(@RequestParam(value = "tenant",
+        defaultValue = "public") String tenant) {
+
+        try {
+            return persistService.getDistinctGroupNameList(tenant);
+        } catch (Exception e) {
+            String errorMsg = "get groupNameList by tenant error";
+            log.error(errorMsg, e);
+            e.printStackTrace();
+            throw new RuntimeException(errorMsg, e);
+        }
+    }
+
+    @GetMapping(params = "search=dataId")
+    @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
+    public List<String> searchDataId(@RequestParam(value = "tenant",
+        defaultValue = "public")String tenant,@RequestParam(value = "group",
+        defaultValue = StringUtils.EMPTY)String group) {
+
+        try {
+            return persistService.getDataIdNameList(tenant,group);
+        } catch (Exception e) {
+            String errorMsg = "get groupNameList by tenant error";
+            log.error(errorMsg, e);
+            e.printStackTrace();
+            throw new RuntimeException(errorMsg, e);
+        }
+    }
+
     /**
      * 增加或更新非聚合数据。
      *
@@ -556,11 +587,11 @@ public class ConfigController {
                                                        @RequestParam(value = "src_user", required = false) String srcUser,
                                                        @RequestParam(value = "tenant", required = true) String namespace,
                                                        @RequestBody(required = true)
-                                                               List<SameNamespaceCloneConfigBean> configBeansList,
+                                                           List<SameNamespaceCloneConfigBean> configBeansList,
                                                        @RequestParam(value = "policy", defaultValue = "ABORT")
                                                            SameConfigPolicy policy) throws NacosException {
         Map<String, Object> failedData = new HashMap<>(4);
-        if(CollectionUtils.isEmpty(configBeansList)){
+        if (CollectionUtils.isEmpty(configBeansList)) {
             failedData.put("succCount", 0);
             return ResultBuilder.buildResult(ResultCodeEnum.NO_SELECTED_CONFIG, failedData);
         }
@@ -578,7 +609,7 @@ public class ConfigController {
             .collect(Collectors.toMap(SameNamespaceCloneConfigBean::getCfgId, cfg -> {
                 idList.add(cfg.getCfgId());
                 return cfg;
-            },(k1, k2) -> k1));
+            }, (k1, k2) -> k1));
 
         List<ConfigAllInfo> queryedDataList = persistService.findAllConfigInfo4Export(null, null, null, null, idList);
 
@@ -622,7 +653,7 @@ public class ConfigController {
         return ResultBuilder.buildSuccessResult("克隆成功", saveResult);
     }
 
-    private String processTenant(String tenant){
+    private String processTenant(String tenant) {
         if (StringUtils.isEmpty(tenant) || NAMESPACE_PUBLIC_KEY.equalsIgnoreCase(tenant)) {
             return "";
         }
