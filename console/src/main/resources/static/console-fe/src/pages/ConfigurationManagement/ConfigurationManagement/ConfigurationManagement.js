@@ -156,18 +156,6 @@ class ConfigurationManagement extends React.Component {
         }
       }
     }
-    this.tenant = getParams('namespace') || '';
-    const groupParams = {
-      tenant: this.tenant,
-      search: 'group',
-    };
-    const dataIdParams = {
-      tenant: this.tenant,
-      search: 'dataId',
-      group: this.group,
-    };
-    this.props.getGroupList(groupParams).then(() => {});
-    this.props.getDataIdOptions(dataIdParams).then(() => {});
   }
 
   setIsCn() {
@@ -243,7 +231,7 @@ class ConfigurationManagement extends React.Component {
       this.dataId = '';
       this.group = '';
       this.setState({
-        group: '',
+        group: '全部',
         dataId: '',
       });
       setParams({
@@ -252,6 +240,8 @@ class ConfigurationManagement extends React.Component {
       });
     }
     this.getData();
+    this.getGroups();
+    this.getDataIdList();
     configsTableSelected.clear();
     const { rowSelection } = this.state;
     rowSelection.selectedRowKeys = [];
@@ -1172,6 +1162,25 @@ class ConfigurationManagement extends React.Component {
     });
   }
 
+  getGroups() {
+    this.tenant = getParams('namespace') || '';
+    const groupParams = {
+      tenant: this.tenant,
+      search: 'group',
+    };
+    this.props.getGroupList(groupParams).then(() => {});
+  }
+
+  getDataIdList() {
+    this.tenant = getParams('namespace') || '';
+    const dataIdParams = {
+      tenant: this.tenant,
+      search: 'dataId',
+      group: this.group,
+    };
+    this.props.getDataIdOptions(dataIdParams).then(() => {});
+  }
+
   render() {
     const { locale = {}, configurations = {}, groupList } = this.props;
     const activeGroup = { color: '#fff', background: '#5584FF' };
@@ -1235,11 +1244,11 @@ class ConfigurationManagement extends React.Component {
               <Form inline>
                 <Form.Item label="Group:" className="ConfigurationManagement-container">
                   <TagGroup>
-                    {groupTypeList.map(item => (
+                    {groupTypeList.map((item, index) => (
                       <Tag
                         style={this.state.group === item ? activeGroup : {}}
                         type="normal"
-                        key={item}
+                        key={item + index}
                         size="medium"
                         onClick={this.setGroup.bind(this, item)}
                       >
@@ -1420,8 +1429,9 @@ class ConfigurationManagement extends React.Component {
                       locaid: 'configsDelete',
                       onClick: () => this.cloneSelectedDataConfirm(),
                     },
-                  ].map(item => (
+                  ].map((item, index) => (
                     <Button
+                      key={item + index}
                       warning={item.warning}
                       type="primary"
                       style={{ marginRight: 10 }}

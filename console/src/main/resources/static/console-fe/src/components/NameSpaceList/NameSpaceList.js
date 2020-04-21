@@ -159,7 +159,6 @@ class NameSpaceList extends React.Component {
 
   rendernamespace(namespaceList) {
     const { nownamespace } = this.state; // 获得当前namespace
-    console.log(nownamespace, 5555);
     const namespacesBtn = namespaceList.map((obj, index) => {
       const style =
         obj.namespace === nownamespace

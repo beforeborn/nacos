@@ -22,6 +22,13 @@ module.exports = Object.assign({}, base, {
   },
   devServer: {
     port: process.env.PORT || 8000,
+    // proxy: [{
+    //   context: ['/'],
+    //   changeOrigin: true,
+    //   secure: false,
+    //   target: 'http://localhost:8848',
+    //   pathRewrite: {'^/v1' : '/nacos/v1'}
+    // }],
     proxy: [{
       context: ['/'],
       changeOrigin: true,
