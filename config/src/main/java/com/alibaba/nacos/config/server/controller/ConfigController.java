@@ -90,7 +90,7 @@ public class ConfigController {
     @GetMapping(params = "search=group")
     @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
     public List<String> searchGroup(@RequestParam(value = "tenant",
-        defaultValue = StringUtils.EMPTY) String tenant) {
+        defaultValue = "public") String tenant) {
 
         try {
             return persistService.getDistinctGroupNameList(tenant);
@@ -105,7 +105,7 @@ public class ConfigController {
     @GetMapping(params = "search=dataId")
     @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
     public List<String> searchDataId(@RequestParam(value = "tenant",
-        defaultValue = StringUtils.EMPTY)String tenant,@RequestParam(value = "group",
+        defaultValue = "public")String tenant,@RequestParam(value = "group",
         defaultValue = StringUtils.EMPTY)String group) {
 
         try {
