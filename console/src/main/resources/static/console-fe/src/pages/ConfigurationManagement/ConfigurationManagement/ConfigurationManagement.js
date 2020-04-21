@@ -32,6 +32,7 @@ import {
   Grid,
   Upload,
   Message,
+  Tag,
 } from '@alifd/next';
 import BatchHandle from 'components/BatchHandle';
 import RegionGroup from 'components/RegionGroup';
@@ -40,18 +41,21 @@ import DeleteDialog from 'components/DeleteDialog';
 import DashboardCard from './DashboardCard';
 import { getParams, setParams, request, aliwareIntl } from '@/globalLib';
 import { connect } from 'react-redux';
-import { getConfigs } from '../../../reducers/configuration';
+import { getConfigs, getDataIdOptions, getGroupList } from '../../../reducers/configuration';
 
 import './index.scss';
 import { LANGUAGE_KEY } from '../../../constants';
 
 const { Panel } = Collapse;
+const { Group: TagGroup } = Tag;
 const configsTableSelected = new Map();
 @connect(
   state => ({
     configurations: state.configuration.configurations,
+    dataIdOptions: state.configuration.dataIdOptions,
+    groupList: state.configuration.groupList,
   }),
-  { getConfigs }
+  { getConfigs, getDataIdOptions, getGroupList }
 )
 @ConfigProvider.config
 class ConfigurationManagement extends React.Component {
@@ -88,13 +92,12 @@ class ConfigurationManagement extends React.Component {
       showAppName: false,
       showgroup: false,
       dataId: this.dataId,
-      group: this.group,
+      group: this.group || '全部',
       appName: this.appName,
       config_tags: [],
       tagLst: [],
       selectValue: [],
       loading: false,
-      groupList: [],
       groups: [],
       tenant: true,
       nownamespace_id: window.nownamespace || '',
@@ -153,6 +156,18 @@ class ConfigurationManagement extends React.Component {
         }
       }
     }
+    this.tenant = getParams('namespace') || '';
+    const groupParams = {
+      tenant: this.tenant,
+      search: 'group',
+    };
+    const dataIdParams = {
+      tenant: this.tenant,
+      search: 'dataId',
+      group: this.group,
+    };
+    this.props.getGroupList(groupParams).then(() => {});
+    this.props.getDataIdOptions(dataIdParams).then(() => {});
   }
 
   setIsCn() {
@@ -457,10 +472,27 @@ class ConfigurationManagement extends React.Component {
    * groupId赋值
    */
   setGroup(value) {
-    this.group = value || '';
-    this.setState({
-      group: value || '',
-    });
+    if (value === '全部') {
+      this.group = '';
+    } else {
+      this.group = value;
+    }
+    this.dataId = '';
+    this.setState(
+      {
+        group: value || '',
+        dataId: '',
+      },
+      () => {
+        this.tenant = getParams('namespace') || '';
+        const params = {
+          group: this.group,
+          search: 'dataId',
+          tenant: this.tenant,
+        };
+        this.props.getDataIdOptions(params).then(() => {});
+      }
+    );
   }
 
   selectAll() {
@@ -1133,8 +1165,18 @@ class ConfigurationManagement extends React.Component {
     });
   }
 
+  dataIdChange(value) {
+    this.dataId = value || '';
+    this.setState({
+      dataId: value || '',
+    });
+  }
+
   render() {
-    const { locale = {}, configurations = {} } = this.props;
+    const { locale = {}, configurations = {}, groupList } = this.props;
+    const activeGroup = { color: '#fff', background: '#5584FF' };
+    let groupTypeList = ['全部'];
+    groupTypeList = [...groupTypeList, ...groupList];
     return (
       <>
         <BatchHandle ref={ref => (this.batchHandle = ref)} />
@@ -1189,30 +1231,23 @@ class ConfigurationManagement extends React.Component {
                 style={{ position: 'absolute', textAlign: 'right', zIndex: 2, right: 0, top: 0 }}
               />
             </div>
-            <div
-              style={{
-                position: 'relative',
-                marginTop: 10,
-                height: this.state.isAdvancedQuery ? 'auto' : 42,
-                overflow: 'hidden',
-              }}
-            >
+            <div style={{ position: 'relative' }}>
               <Form inline>
-                <Form.Item label="Data ID:">
-                  <Input
-                    htmlType="text"
-                    placeholder={locale.fuzzyd}
-                    style={{ width: 200 }}
-                    onChange={dataId => {
-                      this.dataId = dataId;
-                      this.setState({ dataId });
-                    }}
-                    onPressEnter={() => this.getData()}
-                  />
-                </Form.Item>
-
-                <Form.Item label="Group:">
-                  <Select.AutoComplete
+                <Form.Item label="Group:" className="ConfigurationManagement-container">
+                  <TagGroup>
+                    {groupTypeList.map(item => (
+                      <Tag
+                        style={this.state.group === item ? activeGroup : {}}
+                        type="normal"
+                        key={item}
+                        size="medium"
+                        onClick={this.setGroup.bind(this, item)}
+                      >
+                        {item}
+                      </Tag>
+                    ))}
+                  </TagGroup>
+                  {/* <Select.AutoComplete
                     style={{ width: 200 }}
                     size={'medium'}
                     placeholder={locale.fuzzyg}
@@ -1221,7 +1256,30 @@ class ConfigurationManagement extends React.Component {
                     onChange={this.setGroup.bind(this)}
                     onPressEnter={() => this.getData()}
                     hasClear
+                  /> */}
+                </Form.Item>
+                <br />
+                <Form.Item label="Data ID:">
+                  <Select
+                    style={{ width: 200 }}
+                    size={'medium'}
+                    placeholder={locale.fuzzyd}
+                    dataSource={this.props.dataIdOptions}
+                    value={this.state.dataId}
+                    onChange={this.dataIdChange.bind(this)}
+                    hasClear
+                    showSearch={true}
                   />
+                  {/* <Input
+                    htmlType="text"
+                    placeholder={locale.fuzzyd}
+                    style={{ width: 200 }}
+                    onChange={dataId => {
+                      this.dataId = dataId;
+                      this.setState({ dataId });
+                    }}
+                    onPressEnter={() => this.getData()}
+                  /> */}
                 </Form.Item>
                 <Form.Item label={''}>
                   <Button
@@ -1274,39 +1332,43 @@ class ConfigurationManagement extends React.Component {
                   </Button>
                 </Form.Item>
                 <br />
-                <Form.Item
-                  style={this.inApp ? { display: 'none' } : {}}
-                  label={locale.application0}
-                >
-                  <Input
-                    htmlType={'text'}
-                    placeholder={locale.app1}
-                    style={{ width: 200 }}
-                    value={this.state.appName}
-                    onChange={this.setAppName.bind(this)}
-                    onPressEnter={() => this.getData()}
-                  />
-                </Form.Item>
-                <Form.Item label={locale.tags}>
-                  <Select
-                    style={{ width: 200 }}
-                    size="medium"
-                    hasArrow
-                    mode="tag"
-                    placeholder={locale.pleaseEnterTag}
-                    dataSource={this.state.tagLst}
-                    value={this.state.config_tags}
-                    onChange={this.setConfigTags.bind(this)}
-                    showSearch
-                    onSearch={val => {
-                      const { tagLst } = this.state;
-                      if (!tagLst.includes(val)) {
-                        this.setState({ tagLst: tagLst.concat(val) });
-                      }
-                    }}
-                    hasClear
-                  />
-                </Form.Item>
+                {this.state.isAdvancedQuery ? (
+                  <Form.Item
+                    style={this.inApp ? { display: 'none' } : {}}
+                    label={locale.application0}
+                  >
+                    <Input
+                      htmlType={'text'}
+                      placeholder={locale.app1}
+                      style={{ width: 200 }}
+                      value={this.state.appName}
+                      onChange={this.setAppName.bind(this)}
+                      onPressEnter={() => this.getData()}
+                    />
+                  </Form.Item>
+                ) : null}
+                {this.state.isAdvancedQuery ? (
+                  <Form.Item label={locale.tags}>
+                    <Select
+                      style={{ width: 200 }}
+                      size="medium"
+                      hasArrow
+                      mode="tag"
+                      placeholder={locale.pleaseEnterTag}
+                      dataSource={this.state.tagLst}
+                      value={this.state.config_tags}
+                      onChange={this.setConfigTags.bind(this)}
+                      showSearch
+                      onSearch={val => {
+                        const { tagLst } = this.state;
+                        if (!tagLst.includes(val)) {
+                          this.setState({ tagLst: tagLst.concat(val) });
+                        }
+                      }}
+                      hasClear
+                    />
+                  </Form.Item>
+                ) : null}
               </Form>
               <div style={{ position: 'absolute', right: 10, top: 4 }}>
                 <Icon

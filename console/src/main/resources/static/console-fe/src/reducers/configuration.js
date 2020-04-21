@@ -12,10 +12,12 @@
  */
 
 import request from '../utils/request';
-import { GET_CONFIGURATION } from '../constants';
+import { GET_CONFIGURATION, GET_DATAIDOPTIONS, GET_GROUPLIST } from '../constants';
 
 const initialState = {
   configurations: [],
+  dataIdOptions: [],
+  groupList: ['全部'],
 };
 
 const getConfigs = params => dispatch =>
@@ -23,13 +25,25 @@ const getConfigs = params => dispatch =>
     .get('v1/cs/configs', { params })
     .then(data => dispatch({ type: GET_CONFIGURATION, data }));
 
+const getGroupList = params => dispatch =>
+  request.get('v1/cs/configs', { params }).then(data => dispatch({ type: GET_GROUPLIST, data }));
+
+const getDataIdOptions = params => dispatch =>
+  request
+    .get('v1/cs/configs', { params })
+    .then(data => dispatch({ type: GET_DATAIDOPTIONS, data }));
+
 export default (state = initialState, action) => {
   switch (action.type) {
     case GET_CONFIGURATION:
       return { ...state, configurations: action.data };
+    case GET_DATAIDOPTIONS:
+      return { ...state, dataIdOptions: action.data };
+    case GET_GROUPLIST:
+      return { ...state, groupList: action.data };
     default:
       return state;
   }
 };
 
-export { getConfigs };
+export { getConfigs, getDataIdOptions, getGroupList };

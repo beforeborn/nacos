@@ -17,3 +17,8 @@
 .configuration-table {
   margin-bottom: 20px;
 }
+.ConfigurationManagement-container{
+  .next-form-item-control{
+    max-width: calc(100% - 52px);
+  }
+}
