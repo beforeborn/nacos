@@ -1702,14 +1702,14 @@ public class PersistService {
 
     public List<String> getDataIdNameList(String tenant, String group) {
 
-        String sql = "select data_id  from config_info where tenant_id=?";
+        String sql = "select distinct(data_id) from config_info where tenant_id=?";
         List<Object> params = new ArrayList();
         params.add(tenant);
         if (StringUtils.isNotBlank(group)) {
             sql = sql + " and group_id=?";
             params.add(group);
         }
-        return jt.queryForList(sql, String.class, params);
+        return jt.queryForList(sql, String.class, params.toArray());
     }
 
     public int aggrConfigInfoCount(String dataId, String group, String tenant) {
