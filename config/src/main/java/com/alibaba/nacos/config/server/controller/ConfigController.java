@@ -89,11 +89,27 @@ public class ConfigController {
 
     @GetMapping(params = "search=group")
     @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
-    public List<String> searchConfig(@RequestParam(value = "tenant",
+    public List<String> searchGroup(@RequestParam(value = "tenant",
         defaultValue = StringUtils.EMPTY) String tenant) {
 
         try {
             return persistService.getDistinctGroupNameList(tenant);
+        } catch (Exception e) {
+            String errorMsg = "get groupNameList by tenant error";
+            log.error(errorMsg, e);
+            e.printStackTrace();
+            throw new RuntimeException(errorMsg, e);
+        }
+    }
+
+    @GetMapping(params = "search=dataId")
+    @Secured(action = ActionTypes.READ, parser = ConfigResourceParser.class)
+    public List<String> searchDataId(@RequestParam(value = "tenant",
+        defaultValue = StringUtils.EMPTY)String tenant,@RequestParam(value = "group",
+        defaultValue = StringUtils.EMPTY)String group) {
+
+        try {
+            return persistService.getDataIdNameList(tenant,group);
         } catch (Exception e) {
             String errorMsg = "get groupNameList by tenant error";
             log.error(errorMsg, e);

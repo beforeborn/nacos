@@ -1700,6 +1700,18 @@ public class PersistService {
         }
     }
 
+    public List<String> getDataIdNameList(String tenant, String group) {
+
+        String sql = "select data_id  from config_info where tenant_id=?";
+        List<Object> params = new ArrayList();
+        params.add(tenant);
+        if (StringUtils.isNotBlank(group)) {
+            sql = sql + " and group_id=?";
+            params.add(group);
+        }
+        return jt.queryForList(sql, String.class, params);
+    }
+
     public int aggrConfigInfoCount(String dataId, String group, String tenant) {
         String tenantTmp = StringUtils.isBlank(tenant) ? StringUtils.EMPTY : tenant;
         String sql = " SELECT COUNT(ID) FROM config_info_aggr WHERE data_id = ? AND group_id = ? AND tenant_id = ?";
