@@ -9,6 +9,7 @@ target
 .factorypath
 /logs
 *.iml
+**/logs
 node_modules
 test/derby.log
 derby.log
