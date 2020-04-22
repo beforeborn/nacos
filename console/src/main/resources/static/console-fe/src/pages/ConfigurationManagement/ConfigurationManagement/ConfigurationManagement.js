@@ -462,6 +462,7 @@ class ConfigurationManagement extends React.Component {
    * groupId赋值
    */
   setGroup(value) {
+    let that = this;
     if (value === '全部') {
       this.group = '';
     } else {
@@ -474,13 +475,13 @@ class ConfigurationManagement extends React.Component {
         dataId: '',
       },
       () => {
-        this.tenant = getParams('namespace') || '';
+        that.tenant = getParams('namespace') || '';
         const params = {
-          group: this.group,
+          group: that.group,
           search: 'dataId',
-          tenant: this.tenant,
+          tenant: that.tenant,
         };
-        this.props.getDataIdOptions(params).then(() => {});
+        that.props.getDataIdOptions(params).then(() => {});
       }
     );
   }
