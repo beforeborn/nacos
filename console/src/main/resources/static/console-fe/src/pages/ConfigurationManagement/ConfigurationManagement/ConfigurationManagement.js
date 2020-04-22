@@ -482,6 +482,7 @@ class ConfigurationManagement extends React.Component {
           tenant: that.tenant,
         };
         that.props.getDataIdOptions(params).then(() => {});
+        that.getData();
       }
     );
   }
@@ -1157,10 +1158,16 @@ class ConfigurationManagement extends React.Component {
   }
 
   dataIdChange(value) {
+    const that = this;
     this.dataId = value || '';
-    this.setState({
-      dataId: value || '',
-    });
+    this.setState(
+      {
+        dataId: value || '',
+      },
+      () => {
+        that.getData();
+      }
+    );
   }
 
   getGroups() {
@@ -1184,7 +1191,7 @@ class ConfigurationManagement extends React.Component {
 
   render() {
     const { locale = {}, configurations = {}, groupList } = this.props;
-    const activeGroup = { color: '#fff', background: '#5584FF' };
+    const activeGroup = { color: '#fff', background: '#5584FF', cursor: 'pointer' };
     let groupTypeList = ['全部'];
     groupTypeList = [...groupTypeList, ...groupList];
     return (
@@ -1247,7 +1254,7 @@ class ConfigurationManagement extends React.Component {
                   <TagGroup>
                     {groupTypeList.map((item, index) => (
                       <Tag
-                        style={this.state.group === item ? activeGroup : {}}
+                        style={this.state.group === item ? activeGroup : { cursor: 'pointer' }}
                         type="normal"
                         key={item + index}
                         size="medium"
