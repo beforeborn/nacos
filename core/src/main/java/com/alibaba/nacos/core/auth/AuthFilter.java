@@ -21,6 +21,8 @@ import com.alibaba.nacos.core.utils.ExceptionUtil;
 import com.alibaba.nacos.core.utils.Loggers;
 import com.alibaba.nacos.core.utils.WebUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.*;
@@ -47,15 +49,30 @@ public class AuthFilter implements Filter {
     @Autowired
     private ControllerMethodsCache methodsCache;
 
+    private static final Logger logger = LoggerFactory.getLogger(Filter.class);
+
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
         throws IOException, ServletException {
 
+        //只对特定服务器发送来的请求做校验。用于控制nacos正式环境的界面权限控制
+        String authHost = System.getProperty("authHost");
+        String remoteHost = request.getRemoteHost();
+        boolean isBlackHost = (StringUtils.isNotBlank(remoteHost) && remoteHost.equals(authHost));
+
+        logger.info("authHost="+authHost+",remoteHost="+remoteHost);
+        //如果未开启权限校验
         if (!authConfigs.isAuthEnabled()) {
             chain.doFilter(request, response);
             return;
         }
-
+        //如果开启了权限校验但不是黑名单host
+        if (!isBlackHost) {
+            chain.doFilter(request, response);
+            return;
+        }
+        //进行权限校验
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse resp = (HttpServletResponse) response;
 
